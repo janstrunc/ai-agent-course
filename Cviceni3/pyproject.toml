@@ -1,0 +1,12 @@
+[project]
+name = "techzone-agent"
+version = "1.0.0"
+description = "StockAdvisor AI - investment portfolio advisor using OpenAI Agent SDK"
+requires-python = ">=3.11"
+dependencies = [
+    "openai-agents>=0.0.7",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.uv]
+dev-dependencies = []

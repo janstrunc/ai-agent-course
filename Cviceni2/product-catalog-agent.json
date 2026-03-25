@@ -1,0 +1,234 @@
+{
+  "name": "AI Electronics Store Expert",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Jsi zkušený prodejce a specialista na elektroniku v e-shopu TechZone. Máš hluboké znalosti o počítačích, mobilech, sluchátkách, monitorech, herním vybavení a dalším hardware.\n\nTvoje schopnosti:\n1. Vyhledávání produktů v databázi podle názvu, kategorie nebo specifikací\n2. Přidávání nových produktů do nabídky\n3. Zobrazení celého katalogu elektroniky\n4. Odstraňování produktů z nabídky\n5. Dohledání technických informací na Wikipedii\n\nKdyž se zákazník ptá na produkt, vždy nejdřív prohledej databázi. Dokážeš poradit s výběrem, porovnat produkty a doporučit nejlepší volbu podle potřeb zákazníka. Odpovídej česky, přátelsky a profesionálně. Pokud zákazník váhá, nabídni alternativy z nabídky.\n\nKategorie v nabídce: laptops, phones, headphones, monitors, gaming, accessories, smart-home.\n\nIMPORTANT: When using tools, pass parameters exactly as described.",
+          "maxIterations": 10,
+          "returnIntermediateSteps": false
+        }
+      },
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [620, 400],
+      "id": "a1b2c3d4-0001-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [340, 400],
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "webhookId": "product-catalog-agent-chat"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O Mini"
+        },
+        "options": {}
+      },
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [420, 680],
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "credentials": {
+        "openAiApi": {
+          "id": "PLACEHOLDER",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [620, 680],
+      "id": "a1b2c3d4-0004-4000-8000-000000000004"
+    },
+    {
+      "parameters": {
+        "name": "search_products",
+        "description": "Search for electronics products in the database by name, category or specs. Input should be a search query string (e.g. 'laptop', 'gaming', 'headphones', 'Samsung').",
+        "language": "javaScript",
+        "jsCode": "// === SEARCH ELECTRONICS DATABASE ===\n\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData.products) {\n  staticData.products = [\n    { id: 1, name: 'MacBook Pro 16 M3 Pro', category: 'laptops', price: 62990, description: '16\" Retina displej, M3 Pro chip, 18GB RAM, 512GB SSD, 22h výdrž baterie' },\n    { id: 2, name: 'Lenovo ThinkPad X1 Carbon Gen 11', category: 'laptops', price: 38990, description: '14\" 2.8K OLED, Intel i7-1365U, 16GB RAM, 512GB SSD, 1.12kg' },\n    { id: 3, name: 'ASUS ROG Strix G16', category: 'laptops', price: 42990, description: '16\" 165Hz, Intel i9-13980HX, RTX 4070, 16GB RAM, 1TB SSD, RGB klávesnice' },\n    { id: 4, name: 'iPhone 15 Pro Max', category: 'phones', price: 33990, description: '6.7\" Super Retina XDR, A17 Pro chip, 256GB, titanium, 48MP kamera' },\n    { id: 5, name: 'Samsung Galaxy S24 Ultra', category: 'phones', price: 31490, description: '6.8\" Dynamic AMOLED, Snapdragon 8 Gen 3, 256GB, S Pen, 200MP kamera, Galaxy AI' },\n    { id: 6, name: 'Google Pixel 8 Pro', category: 'phones', price: 22990, description: '6.7\" LTPO OLED, Tensor G3, 128GB, nejlepší fotomobil, 7 let updatů' },\n    { id: 7, name: 'Sony WH-1000XM5', category: 'headphones', price: 8490, description: 'Bezdrátová, ANC, 30h výdrž, LDAC, Multipoint, skládací design' },\n    { id: 8, name: 'Apple AirPods Pro 2', category: 'headphones', price: 6490, description: 'TWS, ANC, Adaptive Audio, USB-C, prostorový zvuk, IP54' },\n    { id: 9, name: 'Samsung Odyssey G7 32\"', category: 'monitors', price: 12990, description: '32\" QHD 240Hz, VA panel, 1ms, 1000R zakřivení, HDR600, FreeSync Premium Pro' },\n    { id: 10, name: 'LG UltraFine 27UN880', category: 'monitors', price: 14490, description: '27\" 4K IPS, USB-C 60W, Ergo stojan, HDR10, 99% sRGB, pro kreativce' },\n    { id: 11, name: 'Logitech G Pro X Superlight 2', category: 'gaming', price: 3690, description: 'Bezdrátová herní myš, 60g, HERO 2 senzor 32000 DPI, 95h výdrž' },\n    { id: 12, name: 'Razer BlackWidow V4', category: 'gaming', price: 4490, description: 'Mechanická klávesnice, zelené switche, RGB, media kolečko, opěrka' },\n    { id: 13, name: 'SteelSeries Arctis Nova Pro', category: 'gaming', price: 8990, description: 'Herní headset, ANC, Hi-Res audio, hot-swap baterie, GameDAC Gen 2' },\n    { id: 14, name: 'Samsung T7 Shield 2TB', category: 'accessories', price: 4290, description: 'Přenosný SSD, USB 3.2, 1050 MB/s, IP65 odolnost, šifrování' },\n    { id: 15, name: 'Anker PowerCore 26800mAh', category: 'accessories', price: 1590, description: 'Powerbanka, 3x USB-A, USB-C vstup, nabije notebook, letadlově bezpečná' },\n    { id: 16, name: 'Google Nest Hub Max', category: 'smart-home', price: 5990, description: '10\" displej, Google Assistant, kamera, Chromecast built-in, chytré ovládání domácnosti' },\n    { id: 17, name: 'Apple HomePod mini', category: 'smart-home', price: 2790, description: 'Chytrý reproduktor, Siri, Thread, UWB, Interkom, HomeKit hub' },\n    { id: 18, name: 'DJI Mini 4 Pro', category: 'accessories', price: 21990, description: 'Dron, 4K/60fps, 48MP, OcuSync 4, 34min let, 249g, obstacle avoidance' }\n  ];\n}\n\nconst query = $input.first().json.query?.toLowerCase() || $input.first().json.chatInput?.toLowerCase() || '';\nconst products = staticData.products;\n\nconst results = products.filter(p => \n  p.name.toLowerCase().includes(query) || \n  p.category.toLowerCase().includes(query) ||\n  p.description.toLowerCase().includes(query)\n);\n\nif (results.length === 0) {\n  return { result: `Žádné produkty pro \"${query}\". Kategorie: laptops, phones, headphones, monitors, gaming, accessories, smart-home.` };\n}\n\nconst formatted = results.map(p => \n  `[ID:${p.id}] ${p.name} | ${p.category} | ${p.price} Kč | ${p.description}`\n).join('\\n');\n\nreturn { result: `Nalezeno ${results.length} produkt(ů):\\n${formatted}` };"
+      },
+      "name": "Search Products",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [780, 680],
+      "id": "a1b2c3d4-0005-4000-8000-000000000005"
+    },
+    {
+      "parameters": {
+        "name": "add_product",
+        "description": "Add a new electronics product to the database. Input should be a JSON string with fields: name, category (laptops/phones/headphones/monitors/gaming/accessories/smart-home), price (in CZK), description. Example: {\"name\": \"iPad Air M2\", \"category\": \"accessories\", \"price\": 18990, \"description\": \"10.9 inch, M2 chip, 128GB\"}",
+        "language": "javaScript",
+        "jsCode": "// === ADD PRODUCT TO DATABASE ===\n// This tool adds a new product to the persistent database\n\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData.products) {\n  staticData.products = [];\n}\n\nlet input = $input.first().json.query || $input.first().json.chatInput || '';\n\ntry {\n  // Try to parse JSON from the input\n  let productData;\n  \n  // Handle case where input might be wrapped in extra text\n  const jsonMatch = input.match(/\\{[^}]+\\}/);\n  if (jsonMatch) {\n    productData = JSON.parse(jsonMatch[0]);\n  } else {\n    productData = JSON.parse(input);\n  }\n  \n  const newId = staticData.products.length > 0 \n    ? Math.max(...staticData.products.map(p => p.id)) + 1 \n    : 1;\n  \n  const newProduct = {\n    id: newId,\n    name: productData.name || 'Unknown Product',\n    category: productData.category || 'uncategorized',\n    price: Number(productData.price) || 0,\n    description: productData.description || 'No description'\n  };\n  \n  staticData.products.push(newProduct);\n  \n  return { result: `Product added successfully! [ID:${newProduct.id}] ${newProduct.name} | Category: ${newProduct.category} | Price: $${newProduct.price} | ${newProduct.description}` };\n} catch (e) {\n  return { result: `Error adding product. Please provide valid JSON with: name, category, price, description. Error: ${e.message}` };\n}"
+      },
+      "name": "Add Product",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [940, 680],
+      "id": "a1b2c3d4-0006-4000-8000-000000000006"
+    },
+    {
+      "parameters": {
+        "name": "list_all_products",
+        "description": "List all products currently in the database. No input needed - just call this tool to see everything in the catalog.",
+        "language": "javaScript",
+        "jsCode": "// === LIST ALL ELECTRONICS ===\n\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData.products || staticData.products.length === 0) {\n  return { result: 'Databáze je prázdná. Použij add_product pro přidání produktů.' };\n}\n\nconst products = staticData.products;\nconst categories = [...new Set(products.map(p => p.category))];\n\nlet output = `TechZone Katalog (${products.length} produktů v ${categories.length} kategoriích):\\n\\n`;\n\nfor (const cat of categories.sort()) {\n  const catProducts = products.filter(p => p.category === cat);\n  output += `--- ${cat.toUpperCase()} (${catProducts.length}) ---\\n`;\n  for (const p of catProducts) {\n    output += `  [ID:${p.id}] ${p.name} - ${p.price} Kč - ${p.description}\\n`;\n  }\n  output += '\\n';\n}\n\nconst totalValue = products.reduce((sum, p) => sum + p.price, 0);\noutput += `Celková hodnota katalogu: ${totalValue.toLocaleString('cs-CZ')} Kč`;\n\nreturn { result: output };"
+      },
+      "name": "List All Products",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [1100, 680],
+      "id": "a1b2c3d4-0007-4000-8000-000000000007"
+    },
+    {
+      "parameters": {},
+      "name": "Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [1260, 680],
+      "id": "a1b2c3d4-0008-4000-8000-000000000008"
+    },
+    {
+      "parameters": {
+        "name": "delete_product",
+        "description": "Delete a product from the database by its ID number. Input should be the product ID as a number (e.g. '3').",
+        "language": "javaScript",
+        "jsCode": "// === DELETE PRODUCT FROM DATABASE ===\n\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData.products || staticData.products.length === 0) {\n  return { result: 'The product database is empty. Nothing to delete.' };\n}\n\nconst input = $input.first().json.query || $input.first().json.chatInput || '';\nconst id = parseInt(input);\n\nif (isNaN(id)) {\n  return { result: `Invalid ID \"${input}\". Please provide a numeric product ID.` };\n}\n\nconst index = staticData.products.findIndex(p => p.id === id);\n\nif (index === -1) {\n  return { result: `Product with ID ${id} not found.` };\n}\n\nconst deleted = staticData.products.splice(index, 1)[0];\nreturn { result: `Deleted product: [ID:${deleted.id}] ${deleted.name} ($${deleted.price})` };"
+      },
+      "name": "Delete Product",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [1420, 680],
+      "id": "a1b2c3d4-0009-4000-8000-000000000009"
+    },
+    {
+      "parameters": {
+        "content": "## TechZone - AI Specialista na elektroniku\n\n**Popis:** AI prodejce a poradce v e-shopu s elektronikou.\n\n**Funkce:**\n- Vyhledávání produktů podle názvu, kategorie nebo specifikací\n- Přidávání nových produktů do nabídky\n- Výpis celého katalogu\n- Mazání produktů z nabídky\n- Technické info přes Wikipedii\n- Paměť konverzace\n\n**Kategorie:** laptops, phones, headphones, monitors, gaming, accessories, smart-home\n\n**Nastavení:**\n1. Přidej OpenAI API credentials\n2. Klikni na 'OpenAI Chat Model' a vyber svůj účet\n3. Spusť workflow a otevři chat\n\n**Příklady dotazů:**\n- \"Jaké máte notebooky?\"\n- \"Hledám sluchátka s potlačením hluku\"\n- \"Porovnej iPhone 15 Pro Max a Samsung S24 Ultra\"\n- \"Přidej produkt: iPad Air M2, tablets, 18990 Kč\"\n- \"Co je to OLED displej?\"\n- \"Doporuč mi herní setup do 15000 Kč\"",
+        "height": 520,
+        "width": 420
+      },
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-120, 300],
+      "id": "a1b2c3d4-0010-4000-8000-000000000010"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Products": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Product": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List All Products": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Product": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cviceni2-product-catalog-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "id": "",
+  "tags": []
+}
